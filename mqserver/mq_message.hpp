@@ -438,7 +438,7 @@ namespace mq
             }
             return qmp->front();
         }
-        void ack(const std::string &qname, std::string &msg_id)
+        void ack(const std::string &qname, const std::string &msg_id)
         {
             QueueMessage::ptr qmp;
             {

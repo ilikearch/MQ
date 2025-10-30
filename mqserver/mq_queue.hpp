@@ -177,6 +177,12 @@ namespace mq
                 return MsgQueue::ptr();
             return it->second;
         }
+        
+        QueueMap allQueues()
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            return _msg_queues;
+        }
 
         bool exists(const std::string &name)
         {
