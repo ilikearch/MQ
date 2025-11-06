@@ -34,8 +34,8 @@ namespace mq
             {
                 size_t pos = str.find("=");
                 std::string key = str.substr(0, pos);
-                std::string value = str.substr(pos + 1);
-                args[key] = value;
+                std::string values = str.substr(pos + 1);
+                args[key] = values;
             }
         }
         std::string getArgs()
@@ -63,7 +63,7 @@ namespace mq
         void creatTable()
         {
             std::stringstream sql;
-            sql << "creat table if not exists queue_table(";
+            sql << "create table if not exists queue_table(";
             sql << "name varchar(32) primary key, ";
             sql << "durable int, ";
             sql << "exclusive int, ";
@@ -79,7 +79,7 @@ namespace mq
         bool insert(MsgQueue::ptr &queue)
         {
             std::stringstream ss;
-            ss << "insert into queue_table value(";
+            ss << "insert into queue_table values(";
             ss << "'" << queue->name << "', ";
             ss << queue->durable << ", ";
             ss << queue->exclusive << ", ";
@@ -91,7 +91,7 @@ namespace mq
         {
             // delete from queue_table where name='queue1';
             std::stringstream ss;
-            ss << "delate from queue_table where name=";
+            ss << "delete from queue_table where name=";
             ss << "'" << name << "';";
             _sql_helper.exec(ss.str(), nullptr, nullptr);
         }
@@ -107,7 +107,7 @@ namespace mq
         static int selectCallback(void *arg, int numcol, char **row, char **fields)
         {
             QueueMap *result = (QueueMap *)arg;
-            auto mqp = std::make_shared<MsgQueue>();
+            MsgQueue::ptr mqp = std::make_shared<MsgQueue>();
             mqp->name = row[0];
             mqp->durable = (bool)std::stoi(row[1]);
             mqp->exclusive = (bool)std::stoi(row[2]);
@@ -177,7 +177,7 @@ namespace mq
                 return MsgQueue::ptr();
             return it->second;
         }
-        
+
         QueueMap allQueues()
         {
             std::unique_lock<std::mutex> lock(_mutex);

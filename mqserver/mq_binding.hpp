@@ -145,7 +145,7 @@ namespace mq
                     return false;
             }
             auto &qbmap = _bindings[ename];
-            qbmap.insert(std::make_pair(ename, bp));
+            qbmap.insert(std::make_pair(qname, bp));
             return true;
         }
 
@@ -224,6 +224,7 @@ namespace mq
                 // 遍历每个交换机的绑定信息，从中移除指定队列的相关信息
                 total_size += start->second.size();
             }
+            return total_size;
         }
         void clear()
         {
