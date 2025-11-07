@@ -160,7 +160,7 @@ namespace mq
             size_t fsize = helper.size();
             size_t msg_size = body.size();
             // 写入逻辑：1. 先写入4字节数据长度， 2， 再写入指定长度数据
-            bool ret = helper.write((char *)msg_size, fsize, sizeof(size_t));
+            bool ret = helper.write((char *)&msg_size, fsize, sizeof(size_t));
             if (ret == false)
             {
                 DLOG("向队列数据文件写入数据长度失败！");
@@ -234,7 +234,7 @@ namespace mq
                 msg->mutable_payload()->set_valid("1"); // 在持久化存储中表示数据有效
                 // 3.进行持久化存储
                 bool ret = _mapper.insert(msg);
-                if (ret = false)
+                if (ret == false)
                 {
                     DLOG("持久化存储消息：%s 失败了！", body.c_str());
                     return false;
@@ -312,7 +312,8 @@ namespace mq
             _msgs.clear();
             _durable_msgs.clear();
             _waitack_msgs.clear();
-            _valid_count = _total_count = 0;
+            _valid_count =0;
+            _total_count = 0;
         }
 
     private:
