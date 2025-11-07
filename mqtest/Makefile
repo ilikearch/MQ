@@ -1,4 +1,6 @@
-.PHONY: mq_bindingtest
+.PHONY: mq_msgtest
+mq_msgtest: mq_msgtest.cpp ../mqcommon/mq_msg.pb.cc
+	g++ -g -std=c++17 mq_msgtest.cpp ../mqcommon/mq_msg.pb.cc -o mq_msgtest -lgtest -lprotobuf -lsqlite3 -pthread
 mq_bindingtest:mq_bindingtest.cpp
 	g++ -g -std=c++17 $^ -o $@ -lgtest -lprotobuf -lsqlite3
 mq_queuetest:mq_queuetest.cpp
@@ -10,4 +12,4 @@ mq_exchangetest:mq_exchangetest.cpp
 mq_filetest:mq_filetest.cpp
 	g++ -g -std=c++17 $^ -o $@
 clean:
-	rm -rf mq_bindingtest
+	rm -rf mq_msgtest
