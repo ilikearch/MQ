@@ -56,7 +56,7 @@ namespace mq
             DLOG("del Channel: %p", this);
         }
         // 交换机的声明与删除
-        void declareEchange(const declareExchangeRequestPtr &req)
+        void declareExchange(const declareExchangeRequestPtr &req)
         {
             bool ret = _host->declareExchange(req->exchange_name(),
                                               req->exchange_type(), req->durable(),

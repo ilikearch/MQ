@@ -13,6 +13,7 @@
 #include "mq_connection.hpp"
 #include "mq_consumer.hpp"
 #include "mq_host.hpp"
+#include "mq_channel.hpp"
 
 namespace mq
 {
@@ -70,13 +71,194 @@ namespace mq
                                                  std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             _server.setConnectionCallback(std::bind(&Server::onConnection, this, std::placeholders::_1));
         }
-        void start(){
+        void start()
+        {
             _server.start();
             _baseloop.loop();
         }
+
     private:
-        
-        void onUnknownMessage() {}
+            //打开信道
+            void onOpenChannel(const muduo::net::TcpConnectionPtr& conn, const openChannelRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("打开信道时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                return mconn->openChannel(message);
+            }
+            //关闭信道
+            void onCloseChannel(const muduo::net::TcpConnectionPtr& conn, const closeChannelRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("关闭信道时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                return mconn->closeChannel(message);
+            }
+            //声明交换机
+            void onDeclareExchange(const muduo::net::TcpConnectionPtr& conn, const declareExchangeRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("声明交换机时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("声明交换机时，没有找到信道！");
+                    return;
+                }
+                return cp->declareExchange(message);
+            }
+            //删除交换机
+            void onDeleteExchange(const muduo::net::TcpConnectionPtr& conn, const deleteExchangeRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("删除交换机时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("删除交换机时，没有找到信道！");
+                    return;
+                }
+                return cp->deleteExchange(message);
+            }
+            //声明队列
+            void onDeclareQueue(const muduo::net::TcpConnectionPtr& conn, const declareQueueRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("声明队列时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("声明队列时，没有找到信道！");
+                    return;
+                }
+                return cp->declareQueue(message);
+            }
+            //删除队列
+            void onDeleteQueue(const muduo::net::TcpConnectionPtr& conn, const deleteQueueRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("删除队列时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("删除队列时，没有找到信道！");
+                    return;
+                }
+                return cp->deleteQueue(message);
+            }
+            //队列绑定
+            void onQueueBind(const muduo::net::TcpConnectionPtr& conn, const queueBindRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("队列绑定时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("队列绑定时，没有找到信道！");
+                    return;
+                }
+                return cp->queueBind(message);
+            }
+            //队列解绑
+            void onQueueUnBind(const muduo::net::TcpConnectionPtr& conn, const queueUnBindRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("队列解除绑定时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("队列解除绑定时，没有找到信道！");
+                    return;
+                }
+                return cp->queueUnBind(message);
+            }
+            //消息发布
+            void onBasicPublish(const muduo::net::TcpConnectionPtr& conn, const basicPublishRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("发布消息时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("发布消息时，没有找到信道！");
+                    return;
+                }
+                return cp->basicPublish(message);
+            }
+            //消息确认
+            void onBasicAck(const muduo::net::TcpConnectionPtr& conn, const basicAckRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("确认消息时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("确认消息时，没有找到信道！");
+                    return;
+                }
+                return cp->basicAck(message);
+            }
+            //队列消息订阅
+            void onBasicConsume(const muduo::net::TcpConnectionPtr& conn, const basicConsumeRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("队列消息订阅时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("队列消息订阅时，没有找到信道！");
+                    return;
+                }
+                return cp->basicConsume(message);
+            }
+            //队列消息取消订阅
+            void onBasicCancel(const muduo::net::TcpConnectionPtr& conn, const basicCancelRequestPtr& message, muduo::Timestamp) {
+                Connection::ptr mconn = _connection_manager->getConnection(conn);
+                if (mconn.get() == nullptr) {
+                    DLOG("队列消息取消订阅时，没有找到连接对应的Connection对象！");
+                    conn->shutdown();
+                    return;
+                }
+                Channel::ptr cp = mconn->getChannel(message->cid());
+                if (cp.get() == nullptr) {
+                    DLOG("队列消息取消订阅时，没有找到信道！");
+                    return;
+                }
+                return cp->basicCancel(message);
+            }
+            void onUnknownMessage(const muduo::net::TcpConnectionPtr& conn, const MessagePtr& message, muduo::Timestamp) {
+                LOG_INFO << "onUnknownMessage: " << message->GetTypeName();
+                conn->shutdown();
+            }
+            void onConnection(const muduo::net::TcpConnectionPtr &conn) {
+                if (conn->connected()) {
+                    _connection_manager->newConnection(_virtual_host, _consumer_manager, _codec, conn, _threadpool);
+                }else {
+                    _connection_manager->delConnection(conn);
+                }
+            }
 
     private:
         muduo::net::EventLoop _baseloop;
