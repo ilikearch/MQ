@@ -94,13 +94,13 @@ namespace mq
             bool ret = _host->bind(req->exchange_name(), req->queue_name(), req->binding_key());
             return basicResponse(ret, req->rid(), req->cid());
         }
-        void queueUnBind(const queueBindRequestPtr &req)
+        void queueUnBind(const queueUnBindRequestPtr &req)
         {
             _host->unbind(req->exchange_name(), req->queue_name());
             return basicResponse(true, req->rid(), req->cid());
         }
         // 消息的发布
-        void basicPublic(const basicPublishRequestPtr &req)
+        void basicPublish(const basicPublishRequestPtr &req)
         {
             // 判断交换机是否存在
             auto ep = _host->selectExchange(req->exchange_name());
