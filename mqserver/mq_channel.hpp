@@ -63,7 +63,7 @@ namespace mq
                                               req->auto_delete(), req->args());
             return basicResponse(ret, req->rid(), req->cid());
         }
-        void deleteEchange(const deleteExchangeRequestPtr &req)
+        void deleteExchange(const deleteExchangeRequestPtr &req)
         {
             _host->deleteExchange(req->exchange_name());
             return basicResponse(true, req->rid(), req->cid());
