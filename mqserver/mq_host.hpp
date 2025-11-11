@@ -32,6 +32,8 @@ namespace mq
         }
         void deleteExchange(const std::string &name)
         {
+            //删除交换机的时候，需要将交换机相关的绑定信息也删除掉。
+            _bmp->removeExchangeBindings(name);
             return _emp->deleteExchange(name);
         }
         bool existsExchange(const std::string &name)
@@ -99,7 +101,7 @@ namespace mq
             return _bmp->exists(ename, qname);
         }
 
-        bool basicPubish(const std::string &qname, BasicProperties *bp, const std::string &body)
+        bool basicPublish(const std::string &qname, BasicProperties *bp, const std::string &body)
         {
             MsgQueue::ptr mqp = _mqmp->selectQueue(qname);
             if (mqp.get() == nullptr)
@@ -109,7 +111,7 @@ namespace mq
             }
             return _mmp->insert(qname, bp, body, mqp->durable);
         }
-        Messageptr BasicConsume(const std::string &qname)
+        Messageptr basicConsume(const std::string &qname)
         {
             return _mmp->front(qname);
         }

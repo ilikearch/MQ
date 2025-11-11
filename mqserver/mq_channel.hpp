@@ -122,7 +122,7 @@ namespace mq
                 if (Router::route(ep->type, routing_key, binding.second->binding_key))
                 {
                     // 3. 将消息添加到队列中（添加消息的管理）
-                    _host->basicPubish(binding.first, properties, req->body());
+                    _host->basicPublish(binding.first, properties, req->body());
                     // 4. 向线程池中添加一个消息消费任务（向指定队列的订阅者去推送消息--线程池完成）
                     auto task = std::bind(&Channel::consume, this, binding.first);
                     _pool->push(task);
@@ -178,7 +178,7 @@ namespace mq
         {
             // 指定队列消费消息
             // 1. 从队列中取出一条消息
-            Messageptr mp = _host->BasicConsume(qname);
+            Messageptr mp = _host->basicConsume(qname);
             if (mp.get() == nullptr)
             {
                 DLOG("执行消费任务失败，%s 队列没有消息！", qname.c_str());

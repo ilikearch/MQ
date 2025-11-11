@@ -52,7 +52,7 @@ public:
             std::unique_lock<std::mutex> lock(_mutex);
             // 3. 将构造出来的匿名函数对象，抛入到任务池中
             _taskpool.push_back([task]()
-                                { *task(); });
+                                { (*task)(); });
             _cv.notify_one();
         }
         return fu;

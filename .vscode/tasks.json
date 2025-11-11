@@ -17,11 +17,31 @@
             "problemMatcher": [
                 "$gcc"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
+            "group": "build",
+            "detail": "普通构建任务"
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: 构建测试文件",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-lgtest",
+                "-lgtest_main",
+                "-lpthread"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
             },
-            "detail": "调试器生成的任务。"
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build",
+            "detail": "测试文件构建任务（包含GTest链接）"
         }
     ],
     "version": "2.0.0"
