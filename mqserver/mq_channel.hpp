@@ -27,7 +27,6 @@ namespace mq
     using basicAckRequestPtr = std::shared_ptr<basicAckRequest>;
     using basicConsumeRequestPtr = std::shared_ptr<basicConsumeRequest>;
     using basicCancelRequestPtr = std::shared_ptr<basicCancelRequest>;
-
     class Channel
     {
     public:
@@ -83,15 +82,15 @@ namespace mq
         }
         void deleteQueue(const deleteQueueRequestPtr &req)
         {
-            _cmp->destoryQueueConsumer(req->queue_name());
+            _cmp->destroyQueueConsumer(req->queue_name());
             _host->deleteQueue(req->queue_name());
-
             return basicResponse(true, req->rid(), req->cid());
         }
         // 队列的绑定与解除绑定
         void queueBind(const queueBindRequestPtr &req)
         {
-            bool ret = _host->bind(req->exchange_name(), req->queue_name(), req->binding_key());
+            bool ret = _host->bind(req->exchange_name(),
+                                   req->queue_name(), req->binding_key());
             return basicResponse(ret, req->rid(), req->cid());
         }
         void queueUnBind(const queueUnBindRequestPtr &req)
@@ -102,7 +101,7 @@ namespace mq
         // 消息的发布
         void basicPublish(const basicPublishRequestPtr &req)
         {
-            // 判断交换机是否存在
+            // 1. 判断交换机是否存在
             auto ep = _host->selectExchange(req->exchange_name());
             if (ep.get() == nullptr)
             {
@@ -128,6 +127,7 @@ namespace mq
                     _pool->push(task);
                 }
             }
+            return basicResponse(true, req->rid(), req->cid());
         }
         // 消息的确认
         void basicAck(const basicAckRequestPtr &req)
@@ -174,7 +174,7 @@ namespace mq
             }
             _codec->send(_conn, resp);
         }
-        void consume(std::string &qname)
+        void consume(const std::string &qname)
         {
             // 指定队列消费消息
             // 1. 从队列中取出一条消息
@@ -221,7 +221,8 @@ namespace mq
     public:
         using ptr = std::shared_ptr<ChannelManager>;
         ChannelManager() {}
-        bool openChannel(const std::string &id, const VirtualHost::ptr &host,
+        bool openChannel(const std::string &id,
+                         const VirtualHost::ptr &host,
                          const ConsumerManager::ptr &cmp,
                          const ProtobufCodecPtr &codec,
                          const muduo::net::TcpConnectionPtr &conn,
@@ -243,7 +244,6 @@ namespace mq
             std::unique_lock<std::mutex> lock(_mutex);
             _channels.erase(id);
         }
-
         Channel::ptr getChannel(const std::string &id)
         {
             std::unique_lock<std::mutex> lock(_mutex);
@@ -260,4 +260,5 @@ namespace mq
         std::unordered_map<std::string, Channel::ptr> _channels;
     };
 }
+
 #endif

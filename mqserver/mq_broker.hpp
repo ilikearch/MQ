@@ -21,7 +21,7 @@ namespace mq {
         public:
             typedef std::shared_ptr<google::protobuf::Message> MessagePtr;
             Server(int port, const std::string &basedir): _server(&_baseloop, muduo::net::InetAddress("0.0.0.0", port), 
-                "Server", muduo::net::TcpServer::kReusePort),
+                std::string("Server"),muduo::net::TcpServer::kReusePort),
                 _dispatcher(std::bind(&Server::onUnknownMessage, this, std::placeholders::_1, 
                     std::placeholders::_2, std::placeholders::_3)),
                 _codec(std::make_shared<ProtobufCodec>(std::bind(&ProtobufDispatcher::onProtobufMessage, &_dispatcher, 

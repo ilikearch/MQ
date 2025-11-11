@@ -19,8 +19,7 @@ namespace mq
     public:
         using ptr = std::shared_ptr<Connection>;
         Connection(const std::string &sip, int sport, const AsyncWorker::ptr &worker)
-            : _latch(1),
-              _client(worker->loopthread.startLoop(), muduo::net::InetAddress(sip, sport), "Client"),
+            : _latch(1), _client(worker->loopthread.startLoop(), muduo::net::InetAddress(sip, sport), "Client"),
               _dispatcher(std::bind(&Connection::onUnknownMessage, this, std::placeholders::_1,
                                     std::placeholders::_2, std::placeholders::_3)),
               _codec(std::make_shared<ProtobufCodec>(std::bind(&ProtobufDispatcher::onProtobufMessage, &_dispatcher,
@@ -81,7 +80,7 @@ namespace mq
                 DLOG("未找到信道信息！");
                 return;
             }
-            // 封装异步任务消息处理 抛入线程池
+            // 2. 封装异步任务（消息处理任务），抛入线程池
             _worker->pool.push([channel, message]()
                                { channel->consume(message); });
         }
@@ -99,14 +98,14 @@ namespace mq
             }
             else
             {
-                // 连接关闭
+                // 连接关闭时的操作
                 _conn.reset();
             }
         }
 
     private:
-        muduo::CountDownLatch _latch;       // 实现同步
-        muduo::net::TcpConnectionPtr _conn; // 客户端对应链接
+        muduo::CountDownLatch _latch;       // 实现同步的
+        muduo::net::TcpConnectionPtr _conn; // 客户端对应的连接
         muduo::net::TcpClient _client;      // 客户端
         ProtobufDispatcher _dispatcher;     // 请求分发器
         ProtobufCodecPtr _codec;            // 协议处理器
@@ -115,4 +114,5 @@ namespace mq
         ChannelManager::ptr _channel_manager;
     };
 }
+
 #endif

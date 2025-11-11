@@ -150,7 +150,7 @@ namespace mq
             auto qconsumer = std::make_shared<QueueConsumer>(qname);
             _qconsumers.insert(std::make_pair(qname, qconsumer));
         }
-        void destoryQueueConsumer(const std::string &qname)
+        void destroyQueueConsumer(const std::string &qname)
         {
             std::unique_lock<std::mutex> lock(_mutex);
             _qconsumers.erase(qname);

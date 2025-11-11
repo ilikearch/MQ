@@ -1,27 +1,28 @@
 #include "mq_connection.hpp"
 
-void cb(mq::Channel::ptr &channel, const std::string consumer_tag, 
-    const mq::BasicProperties *bp, const std::string &body)
+void cb(mq::Channel::ptr &channel, const std::string consumer_tag,
+        const mq::BasicProperties *bp, const std::string &body)
 {
     std::cout << consumer_tag << "消费了消息：" << body << std::endl;
     channel->basicAck(bp->id());
 }
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
+    if (argc != 2)
+    {
         std::cout << "usage: ./consume_client queue1\n";
         return -1;
     }
-    //1. 实例化异步工作线程对象
+    // 1. 实例化异步工作线程对象
     mq::AsyncWorker::ptr awp = std::make_shared<mq::AsyncWorker>();
-    //2. 实例化连接对象
+    // 2. 实例化连接对象
     mq::Connection::ptr conn = std::make_shared<mq::Connection>("127.0.0.1", 8085, awp);
-    //3. 通过连接创建信道
+    // 3. 通过连接创建信道
     mq::Channel::ptr channel = conn->openChannel();
-    //4. 通过信道提供的服务完成所需
-    //  1. 声明一个交换机exchange1, 交换机类型为广播模式
+    // 4. 通过信道提供的服务完成所需
+    //   1. 声明一个交换机exchange1, 交换机类型为广播模式
     google::protobuf::Map<std::string, std::string> tmp_map;
-    channel->declareExchange("exchange1", mq::ExchangeType::TOPIC, true, false, tmp_map);
+    channel->declareExchange("exchange1", mq::ExchangeType::FANOUT, true, false, tmp_map);
     //  2. 声明一个队列queue1
     channel->declareQueue("queue1", true, false, false, tmp_map);
     //  3. 声明一个队列queue2
@@ -34,7 +35,8 @@ int main(int argc, char *argv[])
     auto functor = std::bind(cb, channel, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     channel->basicConsume("consumer1", argv[1], false, functor);
 
-    while(1) std::this_thread::sleep_for(std::chrono::seconds(3));
+    while (1)
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     conn->closeChannel(channel);
 
     return 0;

@@ -23,14 +23,8 @@ namespace mq
     {
     public:
         using ptr = std::shared_ptr<Channel>;
-        Channel(const muduo::net::TcpConnectionPtr &conn, const ProtobufCodecPtr &codec)
-            : _cid(UUIDHelper::uuid()),
-              _conn(conn),
-              _codec(codec) {}
-        ~Channel()
-        {
-            basicCancel();
-        }
+        Channel(const muduo::net::TcpConnectionPtr &conn, const ProtobufCodecPtr &codec) : _cid(UUIDHelper::uuid()), _conn(conn), _codec(codec) {}
+        ~Channel() { basicCancel(); }
         std::string cid() { return _cid; }
         bool openChannel()
         {
@@ -52,13 +46,14 @@ namespace mq
             waitResponse(rid);
             return;
         }
-        bool declareExchange(const std::string &name,
-                             ExchangeType type,
-                             bool durable,
-                             bool auto_delete,
-                             google::protobuf::Map<std::string, std::string> &args)
+        bool declareExchange(
+            const std::string &name,
+            ExchangeType type,
+            bool durable,
+            bool auto_delete,
+            google::protobuf::Map<std::string, std::string> &args)
         {
-            // 构造一个声明虚拟机对象的请求对象
+            // 构造一个声明虚拟机的请求对象，
             std::string rid = UUIDHelper::uuid();
             declareExchangeRequest req;
             req.set_rid(rid);
@@ -68,10 +63,11 @@ namespace mq
             req.set_durable(durable);
             req.set_auto_delete(auto_delete);
             req.mutable_args()->swap(args);
-            // 向服务器发送请求
+            // 然后向服务器发送请求
             _codec->send(_conn, req);
-            // 等待服务器响应
+            // 等待服务器的响应
             basicCommonResponsePtr resp = waitResponse(rid);
+            // 返回
             return resp->ok();
         }
         void deleteExchange(const std::string &name)
@@ -85,23 +81,24 @@ namespace mq
             waitResponse(rid);
             return;
         }
-        bool declareQueue(const std::string &qname,
-                          bool qdurable,
-                          bool qexclusive,
-                          bool qauto_delete,
-                          google::protobuf::Map<std::string, std::string> &qargs)
+
+        bool declareQueue(
+            const std::string &qname,
+            bool qdurable,
+            bool qexclusive,
+            bool qauto_delete,
+            google::protobuf::Map<std::string, std::string> &qargs)
         {
             std::string rid = UUIDHelper::uuid();
             declareQueueRequest req;
             req.set_rid(rid);
             req.set_cid(_cid);
             req.set_queue_name(qname);
-            req.set_exclusive(qexclusive);
             req.set_durable(qdurable);
             req.set_auto_delete(qauto_delete);
+            req.set_exclusive(qexclusive);
             req.mutable_args()->swap(qargs);
             _codec->send(_conn, req);
-            // 等待服务器响应
             basicCommonResponsePtr resp = waitResponse(rid);
             return resp->ok();
         }
@@ -116,16 +113,18 @@ namespace mq
             waitResponse(rid);
             return;
         }
-        bool queueBind(const std::string &ename,
-                       const std::string &qname,
-                       const std::string &key)
+
+        bool queueBind(
+            const std::string &ename,
+            const std::string &qname,
+            const std::string &key)
         {
             std::string rid = UUIDHelper::uuid();
             queueBindRequest req;
             req.set_rid(rid);
             req.set_cid(_cid);
-            req.set_queue_name(qname);
             req.set_exchange_name(ename);
+            req.set_queue_name(qname);
             req.set_binding_key(key);
             _codec->send(_conn, req);
             basicCommonResponsePtr resp = waitResponse(rid);
@@ -137,12 +136,13 @@ namespace mq
             queueUnBindRequest req;
             req.set_rid(rid);
             req.set_cid(_cid);
-            req.set_queue_name(qname);
             req.set_exchange_name(ename);
+            req.set_queue_name(qname);
             _codec->send(_conn, req);
             waitResponse(rid);
             return;
         }
+
         void basicPublish(
             const std::string &ename,
             const BasicProperties *bp,
@@ -164,6 +164,7 @@ namespace mq
             waitResponse(rid);
             return;
         }
+
         void basicAck(const std::string &msgid)
         {
             if (_consumer.get() == nullptr)
@@ -181,6 +182,7 @@ namespace mq
             waitResponse(rid);
             return;
         }
+
         void basicCancel()
         {
             if (_consumer.get() == nullptr)
@@ -191,19 +193,23 @@ namespace mq
             basicCancelRequest req;
             req.set_rid(rid);
             req.set_cid(_cid);
+            req.set_queue_name(_consumer->qname);
             req.set_consumer_tag(_consumer->tag);
             _codec->send(_conn, req);
             waitResponse(rid);
+            _consumer.reset();
             return;
         }
-        bool basicConsume(const std::string &consumer_tag,
-                          const std::string &queue_name,
-                          bool auto_ack,
-                          const ConsumerCallback &cb)
+
+        bool basicConsume(
+            const std::string &consumer_tag,
+            const std::string &queue_name,
+            bool auto_ack,
+            const ConsumerCallback &cb)
         {
             if (_consumer.get() != nullptr)
             {
-                DLOG("当前信道已订阅其他队列消息");
+                DLOG("当前信道已订阅其他队列消息！");
                 return false;
             }
             std::string rid = UUIDHelper::uuid();
@@ -217,7 +223,7 @@ namespace mq
             basicCommonResponsePtr resp = waitResponse(rid);
             if (resp->ok() == false)
             {
-                DLOG("添加订阅失败");
+                DLOG("添加订阅失败！");
                 return false;
             }
             _consumer = std::make_shared<Consumer>(consumer_tag, queue_name, auto_ack, cb);
@@ -229,15 +235,16 @@ namespace mq
         void putBasicResponse(const basicCommonResponsePtr &resp)
         {
             std::unique_lock<std::mutex> lock(_mutex);
-            _basic_resp.insert(std::make_pair(resp->rid(),resp));
+            _basic_resp.insert(std::make_pair(resp->rid(), resp));
             _cv.notify_all();
         }
+
         // 连接收到消息推送后，需要通过信道找到对应的消费者对象，通过回调函数进行消息处理
         void consume(const basicConsumeResponsePtr &resp)
         {
             if (_consumer.get() == nullptr)
             {
-                DLOG("消息处理时，未找到订阅者信息");
+                DLOG("消息处理时，未找到订阅者信息！");
                 return;
             }
             if (_consumer->tag != resp->consumer_tag())
@@ -254,19 +261,22 @@ namespace mq
             std::unique_lock<std::mutex> lock(_mutex);
             _cv.wait(lock, [&rid, this]()
                      { return _basic_resp.find(rid) != _basic_resp.end(); });
+            // while(condition()) _cv.wait();
             basicCommonResponsePtr basic_resp = _basic_resp[rid];
+            _basic_resp.erase(rid);
             return basic_resp;
         }
 
     private:
         std::string _cid;
-        Consumer::ptr _consumer;
         muduo::net::TcpConnectionPtr _conn;
         ProtobufCodecPtr _codec;
+        Consumer::ptr _consumer;
         std::mutex _mutex;
         std::condition_variable _cv;
         std::unordered_map<std::string, basicCommonResponsePtr> _basic_resp;
     };
+
     class ChannelManager
     {
     public:
@@ -301,4 +311,5 @@ namespace mq
         std::unordered_map<std::string, Channel::ptr> _channels;
     };
 }
+
 #endif
